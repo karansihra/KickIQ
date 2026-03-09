@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#060A0E">
+<title>KickIQ — Premier League Trivia</title>
+<meta name="description" content="Test your Premier League knowledge against friends online. 90 questions across 3 difficulty levels.">
+<meta property="og:title" content="KickIQ ⚽ — Premier League Trivia">
+<meta property="og:description" content="Think you know the Premier League? Prove it. Play against me right now!">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://upload.wikimedia.org/wikipedia/en/thumb/f/f2/Premier_League_Logo.svg/1200px-Premier_League_Logo.svg.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="KickIQ ⚽ — Premier League Trivia">
+<meta name="twitter:description" content="Think you know the Premier League? Prove it. Play against me right now!">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #060A0E; --bgGrad: linear-gradient(170deg, #060A0E 0%, #0B1219 50%, #091010 100%);
+    --surface: #0E1319; --card: #131A22; --border: #1C2834; --borderLight: #263545;
+    --pitch: #00E676; --pitchDark: #00C853; --pitchDim: rgba(0,230,118,0.2); --pitchGlow: rgba(0,230,118,0.10);
+    --gold: #FFD740; --goldDim: rgba(255,215,64,0.12);
+    --blue: #448AFF; --blueDim: rgba(68,138,255,0.12);
+    --red: #FF5252; --redDim: rgba(255,82,82,0.12);
+    --text: #E8EDF2; --textSec: #7B8FA3; --textDim: #3E5060;
+    --font: 'Outfit', sans-serif; --fontD: 'Bebas Neue', sans-serif;
+  }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
+  body { background: var(--bgGrad); display: flex; justify-content: center; padding-bottom: env(safe-area-inset-bottom); }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+  @keyframes dots { 0%,80%,100% { opacity: 0.2; } 40% { opacity: 1; } }
+  .anim { animation: fadeUp 0.35s ease-out both; }
+  .wrap { width: 100%; max-width: 460px; padding: 24px 16px; min-height: 100vh; }
+  input { font-family: var(--font); }
+  input::placeholder { color: var(--textDim); }
+  input[type=range] { -webkit-appearance: none; height: 6px; border-radius: 3px; background: var(--border); outline: none; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; cursor: pointer; }
+  button { font-family: var(--font); cursor: pointer; border: none; }
+  .btn { width: 100%; padding: 15px 0; border-radius: 14px; font-weight: 700; font-size: 15px; letter-spacing: 0.3px; text-align: center; }
+  .btn-primary { background: var(--pitch); color: #000; box-shadow: 0 4px 24px var(--pitchDim); }
+  .btn-blue { background: var(--blue); color: #fff; }
+  .btn-red { background: var(--red); color: #fff; }
+  .btn-ghost { background: var(--card); color: var(--textSec); border: 1px solid var(--border); }
+  .card { background: var(--card); border-radius: 14px; padding: 16px; border: 1px solid var(--border); }
+  .input { width: 100%; padding: 13px 14px; border-radius: 10px; background: var(--surface); border: 1px solid var(--border); color: var(--text); font-size: 15px; outline: none; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  .opt { padding: 15px 16px; border-radius: 14px; margin-bottom: 9px; background: var(--card); border: 2px solid var(--border); cursor: pointer; display: flex; align-items: center; gap: 12px; transition: all 0.15s ease; }
+  .opt:hover { transform: translateY(-1px); border-color: var(--borderLight); }
+  .opt.correct { background: rgba(0,230,118,0.08); border-color: var(--pitch); box-shadow: 0 0 24px var(--pitchGlow); }
+  .opt.wrong { background: rgba(255,82,82,0.08); border-color: var(--red); box-shadow: 0 0 24px var(--redDim); }
+  .opt .letter { width: 30px; height: 30px; border-radius: 8px; background: var(--surface); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: var(--textDim); flex-shrink: 0; }
+  .opt.correct .letter { background: var(--pitch); color: #000; }
+  .opt.wrong .letter { background: var(--red); color: #000; }
+  .opt .text { font-size: 15px; font-weight: 600; color: var(--text); }
+  .opt.correct .text { color: var(--pitch); }
+  .opt.wrong .text { color: var(--red); }
+  .nav-btn { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+  .nav-btn .back { width: 32px; height: 32px; border-radius: 8px; background: var(--card); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 13px; color: var(--textSec); }
+  .nav-btn .label { font-size: 13px; color: var(--textSec); cursor: pointer; }
+  .nav-btn .home { display: flex; align-items: center; gap: 4px; cursor: pointer; padding: 6px 12px; border-radius: 8px; background: var(--card); border: 1px solid var(--border); font-size: 12px; color: var(--textSec); margin-left: auto; }
+  .timer-ring { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; flex-shrink: 0; }
+  .timer-ring.safe { border: 3px solid var(--pitch); color: var(--pitch); box-shadow: 0 0 12px var(--pitchDim); }
+  .timer-ring.danger { border: 3px solid var(--red); color: var(--red); box-shadow: 0 0 16px var(--redDim); animation: pulse 0.5s ease-in-out infinite; }
+  .progress { height: 4px; border-radius: 2px; background: var(--border); margin-bottom: 20px; overflow: hidden; }
+  .progress .fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--pitch), var(--blue)); transition: width 0.4s ease; }
+  .diff-card { cursor: pointer; margin-bottom: 10px; transition: all 0.15s; }
+  .diff-card:hover { transform: translateY(-1px); }
+  .overlay { position: fixed; inset: 0; background: rgba(6,10,14,0.88); z-index: 100; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(6px); }
+  .overlay .modal { padding: 24px; max-width: 320px; width: 90%; text-align: center; border-radius: 14px; background: var(--card); border: 1px solid var(--border); box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
+  .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 600; letter-spacing: 0.5px; }
+  .dot-loader span { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--pitch); margin: 0 3px; }
+  .dot-loader span:nth-child(1) { animation: dots 1.4s ease-in-out 0s infinite; }
+  .dot-loader span:nth-child(2) { animation: dots 1.4s ease-in-out 0.2s infinite; }
+  .dot-loader span:nth-child(3) { animation: dots 1.4s ease-in-out 0.4s infinite; }
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script>
+// ─── Questions Database ─────────────────────────
+const QUESTIONS = {
+  beginner: [
+    { q: "Who was the first player to score a Premier League hat-trick?", opts: ["Eric Cantona", "Mick Quinn", "Teddy Sheringham", "Les Ferdinand"], ans: 1 },
+    { q: "Which club did N'Golo Kanté play for before joining Chelsea?", opts: ["Caen", "Leicester City", "Marseille", "Southampton"], ans: 1 },
+    { q: "Who managed Chelsea to the 2016-17 Premier League title?", opts: ["José Mourinho", "Antonio Conte", "Maurizio Sarri", "Carlo Ancelotti"], ans: 1 },
+    { q: "Which player has won the most Premier League Golden Boots?", opts: ["Alan Shearer", "Thierry Henry", "Wayne Rooney", "Mohamed Salah"], ans: 1 },
+    { q: "What was the original name of the Premier League when it launched in 1992?", opts: ["The Premiership", "FA Premier League", "Barclays Premier League", "English Premier League"], ans: 1 },
+    { q: "Who scored Arsenal's last goal at Highbury?", opts: ["Dennis Bergkamp", "Thierry Henry", "Robert Pirès", "Robin van Persie"], ans: 1 },
+    { q: "Which team went 49 unbeaten PL matches before losing?", opts: ["Chelsea", "Manchester United", "Arsenal", "Liverpool"], ans: 2 },
+    { q: "Who was the first overseas player to score in the Premier League?", opts: ["Eric Cantona", "Peter Schmeichel", "Andrei Kanchelskis", "Roland Nilsson"], ans: 0 },
+    { q: "Which club did Roberto Mancini manage to their first PL title?", opts: ["Chelsea", "Manchester City", "Liverpool", "Tottenham"], ans: 1 },
+    { q: "Who scored a hat-trick on the final day to win the 1995-96 Golden Boot?", opts: ["Robbie Fowler", "Alan Shearer", "Les Ferdinand", "Dwight Yorke"], ans: 1 },
+    { q: "Which goalkeeper holds the record for most PL clean sheets?", opts: ["David James", "Petr Čech", "Edwin van der Sar", "Joe Hart"], ans: 1 },
+    { q: "How many PL titles did Sir Alex Ferguson win?", opts: ["11", "13", "10", "12"], ans: 1 },
+    { q: "Who was the first African player to win the PL?", opts: ["Nwankwo Kanu", "Lucas Radebe", "Christopher Wreh", "Kolo Touré"], ans: 2 },
+    { q: "Which player was the first to receive a red card in PL history?", opts: ["Vinnie Jones", "Eric Cantona", "David Batty", "Seth Johnson"], ans: 0 },
+    { q: "What was Leicester City's title-winning points total in 2015-16?", opts: ["77", "79", "81", "83"], ans: 2 },
+    { q: "Who did Arsène Wenger replace as Arsenal manager?", opts: ["George Graham", "Bruce Rioch", "Stewart Houston", "Don Howe"], ans: 1 },
+    { q: "Which player scored the quickest PL hat-trick in the 1990s?", opts: ["Robbie Fowler", "Andy Cole", "Chris Sutton", "Ian Wright"], ans: 0 },
+    { q: "Which team was the first to be relegated from the Premier League?", opts: ["Nottingham Forest", "Crystal Palace", "Middlesbrough", "Oldham Athletic"], ans: 1 },
+    { q: "How many consecutive PL titles did Manchester United win from 2006-2009?", opts: ["2", "3", "4", "5"], ans: 1 },
+    { q: "Who was the Premier League's first Player of the Season (1994)?", opts: ["Eric Cantona", "Alan Shearer", "Peter Beardsley", "Mark Hughes"], ans: 1 },
+    { q: "Which club did Didier Drogba join Chelsea from?", opts: ["Guingamp", "Le Mans", "Marseille", "Monaco"], ans: 2 },
+    { q: "In which season did the PL first use goal-line technology?", opts: ["2012-13", "2013-14", "2014-15", "2015-16"], ans: 1 },
+    { q: "Who is the most expensive PL signing to never score a league goal?", opts: ["Kepa Arrizabalaga", "Timo Werner", "Danny Drinkwater", "Tanguy Ndombele"], ans: 0 },
+    { q: "Which PL club has the longest-running nickname 'The Blades'?", opts: ["Sheffield Wednesday", "Sheffield United", "Wolverhampton", "West Brom"], ans: 1 },
+    { q: "Who scored the winner in the 2003-04 North London derby called 'The Battle of Old Trafford'?", opts: ["Thierry Henry", "Ruud van Nistelrooy", "Patrick Vieira", "Martin Keown"], ans: 0 },
+    { q: "How many PL clubs has Frank Lampard managed?", opts: ["1", "2", "3", "4"], ans: 2 },
+    { q: "Which player scored Man United's Champions League winning goal in 1999?", opts: ["Teddy Sheringham", "Ole Gunnar Solskjær", "David Beckham", "Andy Cole"], ans: 1 },
+    { q: "What was Chelsea's points total in their record 2004-05 title season?", opts: ["91", "93", "95", "97"], ans: 2 },
+    { q: "Who was the first PL manager to be sacked?", opts: ["Dave Bassett", "Peter Reid", "Ian Porterfield", "Howard Kendall"], ans: 2 },
+    { q: "Which team won the last First Division title before the PL era?", opts: ["Arsenal", "Liverpool", "Leeds United", "Manchester United"], ans: 2 },
+  ],
+  intermediate: [
+    { q: "How many PL goals did Thierry Henry score in total?", opts: ["175", "174", "176", "178"], ans: 0 },
+    { q: "Who was the first substitute to score a PL hat-trick?", opts: ["Jermain Defoe", "Ole Gunnar Solskjær", "Jimmy Floyd Hasselbaink", "Robbie Keane"], ans: 1 },
+    { q: "Which player scored the 15,000th PL goal?", opts: ["Daniel Sturridge", "Wayne Rooney", "Olivier Giroud", "Sadio Mané"], ans: 0 },
+    { q: "What was Derby County's record-low points total in 2007-08?", opts: ["9", "11", "13", "15"], ans: 1 },
+    { q: "Who assisted the most goals in PL history?", opts: ["Cesc Fàbregas", "Ryan Giggs", "Kevin De Bruyne", "Frank Lampard"], ans: 1 },
+    { q: "How many PL goals did Jamie Vardy score in his consecutive scoring run?", opts: ["11", "13", "14", "12"], ans: 2 },
+    { q: "Which player has been offside the most in PL history?", opts: ["Wayne Rooney", "Darren Bent", "Alan Shearer", "Robbie Keane"], ans: 1 },
+    { q: "What was the exact minute of Agüero's 2012 title-winning goal?", opts: ["93:17", "93:20", "94:02", "93:48"], ans: 1 },
+    { q: "Who scored a free kick from inside his own half in the PL?", opts: ["David Beckham", "Xabi Alonso", "Charlie Adam", "Wayne Rooney"], ans: 1 },
+    { q: "How many PL hat-tricks did Robbie Fowler score?", opts: ["7", "9", "6", "8"], ans: 1 },
+    { q: "Which player holds the record for most PL goals in a calendar year?", opts: ["Alan Shearer", "Mohamed Salah", "Harry Kane", "Thierry Henry"], ans: 2 },
+    { q: "What shirt number did Cristiano Ronaldo wear in his first Man Utd spell?", opts: ["7", "28", "9", "11"], ans: 0 },
+    { q: "Who was the first PL player to score 5 goals in a single match?", opts: ["Alan Shearer", "Andy Cole", "Jermain Defoe", "Dimitar Berbatov"], ans: 1 },
+    { q: "How many PL penalties did Matt Le Tissier miss?", opts: ["0", "1", "2", "3"], ans: 1 },
+    { q: "Which keeper saved the most PL penalties?", opts: ["David James", "Paul Robinson", "Ben Foster", "Tim Howard"], ans: 0 },
+    { q: "Who scored the fastest PL goal from the start of a match?", opts: ["Ledley King", "Alan Shearer", "Shane Long", "Mark Viduka"], ans: 2 },
+    { q: "What was Newcastle's final points gap behind Man Utd in 1995-96?", opts: ["4", "7", "12", "8"], ans: 0 },
+    { q: "How many clubs did Nicolas Anelka play for in the PL?", opts: ["4", "5", "6", "7"], ans: 2 },
+    { q: "Who scored an overhead kick from 25 yards for Man Utd vs Man City?", opts: ["Wayne Rooney", "Cristiano Ronaldo", "Robin van Persie", "Paul Scholes"], ans: 0 },
+    { q: "Which PL club went 86 home matches unbeaten between 2003-2008?", opts: ["Arsenal", "Manchester United", "Chelsea", "Liverpool"], ans: 2 },
+    { q: "How many PL goals did Frank Lampard score from midfield (career total)?", opts: ["147", "168", "177", "152"], ans: 2 },
+    { q: "Which PL team conceded 100+ goals in a single season?", opts: ["Derby County 07-08", "Swindon Town 93-94", "Ipswich Town 94-95", "Bradford City 00-01"], ans: 1 },
+    { q: "Who was the first PL player to score directly from a corner?", opts: ["David Beckham", "Thierry Henry", "Laurent Robert", "Morten Gamst Pedersen"], ans: 0 },
+    { q: "How many PL own goals did Richard Dunne score?", opts: ["8", "10", "7", "12"], ans: 1 },
+    { q: "Which player was booked the most times in PL history?", opts: ["Lee Bowyer", "Kevin Davies", "Gareth Barry", "Scott Parker"], ans: 2 },
+    { q: "Who scored 4 goals in a PL debut for Arsenal?", opts: ["Thierry Henry", "Ian Wright", "Andrey Arshavin", "Eduardo da Silva"], ans: 1 },
+    { q: "What was Man City's goal difference in their 100-point 2017-18 season?", opts: ["+72", "+79", "+76", "+68"], ans: 1 },
+    { q: "Which GK scored a PL goal for Tottenham from his own area?", opts: ["Paul Robinson", "Brad Friedel", "Heurelho Gomes", "Hugo Lloris"], ans: 0 },
+    { q: "How many PL games did Arsène Wenger manage in total?", opts: ["828", "823", "810", "835"], ans: 0 },
+    { q: "Who was the first player to score in 6 consecutive PL London derbies?", opts: ["Thierry Henry", "Emmanuel Adebayor", "Robin van Persie", "Didier Drogba"], ans: 0 },
+  ],
+  advanced: [
+    { q: "What was the exact time (min:sec) of Ledley King's goal vs Bradford — historically listed as the fastest PL goal before Shane Long?", opts: ["9.9 seconds", "10.0 seconds", "11.9 seconds", "12.2 seconds"], ans: 0 },
+    { q: "Who holds the PL record for most touches in a single match (192)?", opts: ["Jack Grealish", "Ilkay Gündogan", "Bernardo Silva", "Rodri"], ans: 2 },
+    { q: "In the 1993-94 season, which newly promoted club finished 5th?", opts: ["Swindon Town", "Newcastle United", "West Ham", "Crystal Palace"], ans: 1 },
+    { q: "How many PL goals did Matthew Le Tissier score in total?", opts: ["100", "101", "102", "209"], ans: 0 },
+    { q: "Which club's stadium was called 'The Dell' before they moved?", opts: ["Coventry City", "Southampton", "Leicester City", "Bolton"], ans: 1 },
+    { q: "Who provided the most PL assists in the 2002-03 season?", opts: ["Thierry Henry", "Robert Pirès", "David Beckham", "Ryan Giggs"], ans: 1 },
+    { q: "How many PL managers were sacked during the 2013-14 season?", opts: ["7", "9", "10", "12"], ans: 2 },
+    { q: "What was the transfer fee when Rio Ferdinand moved from Leeds to Man Utd in 2002?", opts: ["£25m", "£29.1m", "£30m", "£33m"], ans: 2 },
+    { q: "Who scored the first PL goal at the new Wembley (during regular season)?", opts: ["Jermain Defoe", "Dele Alli", "Harry Kane", "Christian Eriksen"], ans: 2 },
+    { q: "How many consecutive PL home wins did Liverpool achieve from 2019-2021?", opts: ["64", "68", "60", "72"], ans: 1 },
+    { q: "Which PL player ran the most distance in a single match (13.92km)?", opts: ["James Milner", "N'Golo Kanté", "Son Heung-min", "Declan Rice"], ans: 0 },
+    { q: "Who was Man Utd's first PL signing in 1992?", opts: ["Roy Keane", "Eric Cantona", "Dion Dublin", "Andy Cole"], ans: 2 },
+    { q: "What was the combined score of Portsmouth 7-4 Reading in 2007?", opts: ["9-3", "7-4", "5-7", "8-4"], ans: 1 },
+    { q: "How many PL goals did Kevin Phillips score for Sunderland in 1999-00?", opts: ["28", "30", "25", "32"], ans: 1 },
+    { q: "Which player made the most PL tackles in a single season (165)?", opts: ["Claude Makélélé", "Gareth Barry", "Michael Essien", "Nicky Butt"], ans: 0 },
+    { q: "What was the exact attendance at the first ever PL match (Sheffield Utd vs Man City)?", opts: ["18,412", "22,741", "20,662", "25,118"], ans: 1 },
+    { q: "Who is the only PL goalkeeper to save 3 penalties in a single match?", opts: ["Mark Crossley", "Paul Robinson", "Tim Howard", "Mark Schwarzer"], ans: 2 },
+    { q: "How many different PL clubs did Marcus Bent play for?", opts: ["5", "6", "7", "8"], ans: 2 },
+    { q: "Which PL club went 30 consecutive away matches without a win in 2003-04?", opts: ["Wolverhampton", "Leicester City", "Leeds United", "West Brom"], ans: 0 },
+    { q: "What was the exact fee when Andriy Shevchenko joined Chelsea?", opts: ["£28m", "£30m", "£30.8m", "£32m"], ans: 2 },
+    { q: "Who scored the 20,000th PL goal?", opts: ["Marc Albrighton", "Adam Johnson", "Marc Pugh", "Leroy Sané"], ans: 0 },
+    { q: "How many PL assists did Dennis Bergkamp register in total?", opts: ["89", "94", "102", "86"], ans: 1 },
+    { q: "Which PL team used the most players (36) in the 2000-01 season?", opts: ["Derby County", "Bradford City", "Coventry City", "Southampton"], ans: 0 },
+    { q: "What was the longest PL match delay due to floodlight failure (in minutes)?", opts: ["28", "33", "45", "52"], ans: 1 },
+    { q: "Who was the oldest outfield player to play a PL match (43 years)?", opts: ["Ryan Giggs", "Gordon Strachan", "Teddy Sheringham", "John Burridge"], ans: 2 },
+    { q: "How many headed goals did Peter Crouch score in the PL?", opts: ["29", "36", "33", "42"], ans: 0 },
+    { q: "Which PL player had the highest pass completion rate in 2018-19 (min 1000 passes)?", opts: ["Jorginho", "Fernandinho", "Aymeric Laporte", "Virgil van Dijk"], ans: 2 },
+    { q: "What was Wimbledon FC's final PL season before relocating?", opts: ["1998-99", "1999-00", "2000-01", "2001-02"], ans: 1 },
+    { q: "How many PL penalties did Alan Shearer score in total?", opts: ["56", "51", "46", "63"], ans: 2 },
+    { q: "Who was the first player to be sent off twice in the same PL match (for two bookable offences + straight red rescinded)?", opts: ["Vinnie Jones", "David Beckham", "Roy Keane", "Patrick Vieira"], ans: 0 },
+  ],
+};
+
+const DIFF = {
+  beginner:     { label: "Beginner",     emoji: "🟢", color: "#00E676", time: 25, xp: 1 },
+  intermediate: { label: "Intermediate", emoji: "🟡", color: "#FFD740", time: 18, xp: 2 },
+  advanced:     { label: "Advanced",     emoji: "🔴", color: "#FF5252", time: 10, xp: 3 },
+};
+
+const NUM_Q = 10;
+const LETTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+// ─── Utility ────────────────────────────────────
+function shuffle(a) { const b=[...a]; for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];} return b; }
+function pick(diff) { return shuffle(QUESTIONS[diff]).slice(0, NUM_Q); }
+function makeCode() { return Array.from({length:5},()=>LETTERS[Math.floor(Math.random()*LETTERS.length)]).join(""); }
+function $(id) { return document.getElementById(id); }
+function show(id) { document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active")); $(id).classList.add("active"); $(id).classList.remove("anim"); void $(id).offsetWidth; $(id).classList.add("anim"); }
+function h(tag, attrs, ...children) {
+  const el = document.createElement(tag);
+  if (attrs) Object.entries(attrs).forEach(([k,v]) => {
+    if (k === "style" && typeof v === "object") Object.assign(el.style, v);
+    else if (k.startsWith("on")) el.addEventListener(k.slice(2).toLowerCase(), v);
+    else el.setAttribute(k, v);
+  });
+  children.flat().forEach(c => { if (c != null) el.append(typeof c === "string" ? document.createTextNode(c) : c); });
+  return el;
+}
+
+// ─── State ──────────────────────────────────────
+let state = {
+  name: "", difficulty: "beginner", mode: null,
+  timerSettings: { beginner: 25, intermediate: 18, advanced: 10 },
+  questions: [], currentQ: 0, score: 0, answers: [],
+  timeLeft: 0, selected: null, showResult: false,
+  cpuScore: 0, opponentName: "", opponentScore: 0, opponentDone: false,
+  roomCode: "", isHost: false, peer: null, conn: null,
+  timerId: null, showQuit: false,
+};
+
+// ─── PeerJS Multiplayer ─────────────────────────
+function destroyPeer() {
+  if (state.conn) { try { state.conn.close(); } catch(e){} state.conn = null; }
+  if (state.peer) { try { state.peer.destroy(); } catch(e){} state.peer = null; }
+}
+
+function sendData(data) {
+  if (state.conn && state.conn.open) {
+    try { state.conn.send(JSON.stringify(data)); } catch(e){}
+  }
+}
+
+function handleData(raw) {
+  let data;
+  try { data = JSON.parse(raw); } catch(e) { return; }
+
+  if (data.type === "game_start") {
+    // Guest receives questions + settings from host
+    state.questions = data.questions;
+    state.difficulty = data.difficulty;
+    state.opponentName = data.hostName;
+    state.timerSettings[data.difficulty] = data.timerSec;
+    state.score = 0; state.answers = []; state.currentQ = 0;
+    state.opponentScore = 0; state.opponentDone = false;
+    startPlaying();
+  }
+  if (data.type === "guest_joined") {
+    // Host learns guest name, starts game
+    state.opponentName = data.guestName;
+    // Send game data to guest
+    sendData({
+      type: "game_start",
+      questions: state.questions,
+      difficulty: state.difficulty,
+      timerSec: state.timerSettings[state.difficulty],
+      hostName: state.name,
+    });
+    state.score = 0; state.answers = []; state.currentQ = 0;
+    state.opponentScore = 0; state.opponentDone = false;
+    startPlaying();
+  }
+  if (data.type === "answer") {
+    state.opponentScore = data.score;
+    updateScoreboard();
+  }
+  if (data.type === "done") {
+    state.opponentScore = data.score;
+    state.opponentDone = true;
+    if (state.showResult && state.currentQ >= state.questions.length - 1) {
+      // Already on results, refresh
+      renderResults();
+    }
+  }
+}
+
+function createRoom() {
+  const code = "KIQ" + makeCode();
+  state.roomCode = code;
+  state.isHost = true;
+
+  destroyPeer();
+  const peer = new Peer(code);
+  state.peer = peer;
+
+  $("wait-code").textContent = code;
+  $("wait-diff").textContent = `${DIFF[state.difficulty].emoji} ${DIFF[state.difficulty].label} · ${state.timerSettings[state.difficulty]}s per question`;
+  show("waiting");
+
+  peer.on("open", () => {
+    $("wait-status").textContent = "Share this code with your friend";
+  });
+  peer.on("connection", (conn) => {
+    state.conn = conn;
+    conn.on("data", handleData);
+    conn.on("close", () => { state.conn = null; });
+  });
+  peer.on("error", (err) => {
+    $("wait-status").textContent = "Connection error. Try again.";
+    console.error(err);
+  });
+}
+
+function joinRoom() {
+  const code = $("join-input").value.trim().toUpperCase();
+  if (!code) { $("lobby-error").textContent = "Enter a room code."; $("lobby-error").style.display = "block"; return; }
+  if (!state.name) return;
+
+  $("lobby-error").style.display = "none";
+  destroyPeer();
+
+  const peer = new Peer();
+  state.peer = peer;
+  state.isHost = false;
+  state.roomCode = code;
+
+  peer.on("open", () => {
+    const conn = peer.connect(code, { reliable: true });
+    state.conn = conn;
+    conn.on("open", () => {
+      sendData({ type: "guest_joined", guestName: state.name });
+    });
+    conn.on("data", handleData);
+    conn.on("close", () => { state.conn = null; });
+    conn.on("error", (err) => {
+      $("lobby-error").textContent = "Could not connect. Check your code.";
+      $("lobby-error").style.display = "block";
+    });
+  });
+  peer.on("error", (err) => {
+    $("lobby-error").textContent = "Game not found. Check your code and try again.";
+    $("lobby-error").style.display = "block";
+    console.error(err);
+  });
+}
+
+// ─── Game Logic ─────────────────────────────────
+function startPlaying() {
+  state.selected = null;
+  state.showResult = false;
+  state.showQuit = false;
+  state.currentQ = 0;
+  startTimer();
+  show("playing");
+  renderQuestion();
+}
+
+function startTimer() {
+  clearInterval(state.timerId);
+  state.timeLeft = state.timerSettings[state.difficulty];
+  state.timerId = setInterval(() => {
+    state.timeLeft--;
+    updateTimer();
+    if (state.timeLeft <= 0) {
+      clearInterval(state.timerId);
+      if (!state.showResult) selectAnswer(-1);
+    }
+  }, 1000);
+}
+
+function updateTimer() {
+  const el = $("timer");
+  if (!el) return;
+  el.textContent = state.timeLeft;
+  el.className = "timer-ring " + (state.timeLeft <= 5 ? "danger" : "safe");
+}
+
+function updateScoreboard() {
+  const el = $("scoreboard");
+  if (!el) return;
+  if (state.mode === "computer") {
+    el.innerHTML = `You: <b style="color:var(--pitch)">${state.score}</b> · CPU: <b style="color:var(--red)">${state.cpuScore}</b>`;
+  } else {
+    el.innerHTML = `${esc(state.name)}: <b style="color:var(--pitch)">${state.score}</b> · ${esc(state.opponentName)}: <b style="color:var(--blue)">${state.opponentScore}</b>`;
+  }
+}
+
+function esc(s) { const d=document.createElement("div"); d.textContent=s; return d.innerHTML; }
+
+function selectAnswer(idx) {
+  if (state.showResult) return;
+  clearInterval(state.timerId);
+  state.selected = idx;
+  state.showResult = true;
+
+  const q = state.questions[state.currentQ];
+  const correct = q.ans === idx;
+  const timeTaken = state.timerSettings[state.difficulty] - state.timeLeft;
+  state.answers.push({ selected: idx, correct, timeTaken });
+  if (correct) state.score++;
+
+  // CPU
+  if (state.mode === "computer") {
+    const chance = state.difficulty === "beginner" ? 0.55 : state.difficulty === "intermediate" ? 0.45 : 0.35;
+    if (Math.random() < chance) state.cpuScore++;
+  }
+
+  // Sync online
+  if (state.mode === "online") {
+    sendData({ type: "answer", score: state.score });
+  }
+
+  // Highlight options
+  const opts = document.querySelectorAll("#q-options .opt");
+  opts.forEach((o, i) => {
+    o.style.pointerEvents = "none";
+    if (i === q.ans) o.classList.add("correct");
+    else if (i === idx && !correct) o.classList.add("wrong");
+  });
+
+  if (idx === -1) {
+    $("timeout-msg").style.display = "block";
+  }
+
+  updateScoreboard();
+
+  setTimeout(() => {
+    if (state.currentQ + 1 < state.questions.length) {
+      state.currentQ++;
+      state.selected = null;
+      state.showResult = false;
+      startTimer();
+      renderQuestion();
+    } else {
+      // Game over
+      if (state.mode === "online") {
+        sendData({ type: "done", score: state.score });
+      }
+      clearInterval(state.timerId);
+      show("results");
+      renderResults();
+    }
+  }, 1800);
+}
+
+function renderQuestion() {
+  const q = state.questions[state.currentQ];
+  $("q-num").textContent = `Q ${state.currentQ + 1} / ${state.questions.length}`;
+  $("q-progress-fill").style.width = `${(state.currentQ / state.questions.length) * 100}%`;
+  $("q-badge").textContent = `🏴󠁧󠁢󠁥󠁮󠁧󠁿 PREMIER LEAGUE · ${DIFF[state.difficulty].label.toUpperCase()}`;
+  $("q-badge").style.color = DIFF[state.difficulty].color;
+  $("q-badge").style.background = DIFF[state.difficulty].color + "18";
+  $("q-badge").style.borderColor = DIFF[state.difficulty].color + "33";
+  $("q-text").textContent = q.q;
+  $("timeout-msg").style.display = "none";
+  updateTimer();
+  updateScoreboard();
+
+  const container = $("q-options");
+  container.innerHTML = "";
+  q.opts.forEach((opt, i) => {
+    const div = document.createElement("div");
+    div.className = "opt";
+    div.innerHTML = `<div class="letter">${String.fromCharCode(65+i)}</div><span class="text">${esc(opt)}</span>`;
+    div.addEventListener("click", () => selectAnswer(i));
+    container.appendChild(div);
+  });
+}
+
+function renderResults() {
+  const oppScore = state.mode === "computer" ? state.cpuScore : state.opponentScore;
+  const oppName = state.mode === "computer" ? "CPU" : (state.opponentName || "Opponent");
+  const win = state.score > oppScore;
+  const draw = state.score === oppScore;
+
+  $("r-emoji").textContent = win ? "🏆" : draw ? "🤝" : "😤";
+  $("r-title").textContent = win ? "YOU WIN!" : draw ? "DRAW!" : "YOU LOSE!";
+  $("r-subtitle").textContent = `Premier League · ${DIFF[state.difficulty].label}`;
+
+  $("r-my-name").textContent = state.name;
+  $("r-my-name").style.color = "var(--pitch)";
+  $("r-my-score").textContent = state.score;
+  $("r-opp-name").textContent = oppName;
+  $("r-opp-name").style.color = state.mode === "computer" ? "var(--red)" : "var(--blue)";
+  $("r-opp-score").textContent = oppScore;
+  $("r-total").textContent = `/ ${state.questions.length}`;
+  $("r-total2").textContent = `/ ${state.questions.length}`;
+
+  $("r-correct").textContent = `${state.score}/${state.questions.length}`;
+  const avgTime = state.answers.length ? (state.answers.reduce((a,b)=>a+b.timeTaken,0)/state.answers.length).toFixed(1) + "s" : "-";
+  $("r-avgtime").textContent = avgTime;
+  $("r-accuracy").textContent = `${Math.round((state.score/state.questions.length)*100)}%`;
+
+  // Answer review
+  const rev = $("r-review");
+  rev.innerHTML = "";
+  state.questions.forEach((q, i) => {
+    const a = state.answers[i];
+    const row = document.createElement("div");
+    row.style.cssText = `display:flex;align-items:flex-start;gap:8px;padding:8px 0;${i < state.questions.length - 1 ? "border-bottom:1px solid var(--border)" : ""}`;
+    const icon = a?.correct ? "✓" : "✗";
+    const iconColor = a?.correct ? "var(--pitch)" : "var(--red)";
+    const iconBg = a?.correct ? "rgba(0,230,118,0.13)" : "rgba(255,82,82,0.13)";
+    let html = `<div style="width:22px;height:22px;border-radius:6px;flex-shrink:0;margin-top:1px;background:${iconBg};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:${iconColor}">${icon}</div>`;
+    html += `<div style="flex:1"><div style="font-size:11px;color:var(--text);line-height:1.4">${esc(q.q)}</div>`;
+    if (!a?.correct) html += `<div style="font-size:10px;color:var(--pitch);margin-top:2px">Answer: ${esc(q.opts[q.ans])}</div>`;
+    html += `</div>`;
+    if (a) html += `<span style="font-size:10px;color:var(--textDim);flex-shrink:0">${a.timeTaken}s</span>`;
+    row.innerHTML = html;
+    rev.appendChild(row);
+  });
+
+  // Waiting for opponent
+  if (state.mode === "online" && !state.opponentDone) {
+    $("r-waiting").style.display = "block";
+    $("r-waiting").textContent = `⏳ Waiting for ${esc(oppName)} to finish...`;
+  } else {
+    $("r-waiting").style.display = "none";
+  }
+}
+
+function goHome() {
+  clearInterval(state.timerId);
+  destroyPeer();
+  state.showQuit = false;
+  $("quit-overlay").style.display = "none";
+  show("menu");
+}
+
+function startVsComputer() {
+  state.mode = "computer";
+  state.questions = pick(state.difficulty);
+  state.score = 0; state.answers = []; state.cpuScore = 0; state.currentQ = 0;
+  state.opponentScore = 0; state.opponentDone = false;
+  startPlaying();
+}
+
+// ─── Build UI ───────────────────────────────────
+function buildApp() {
+  const app = $("app");
+  app.innerHTML = `
+  <!-- NAME ENTRY -->
+  <div class="screen active anim" id="name-entry" style="margin-top:20vh;text-align:center">
+    <div style="font-size:52px;font-family:var(--fontD);letter-spacing:4px;line-height:1">KICK<span style="color:var(--pitch)">IQ</span></div>
+    <div style="font-size:13px;color:var(--textSec);margin-top:4px;margin-bottom:32px">Premier League Trivia</div>
+    <input id="name-input" class="input" placeholder="Enter your name..." style="text-align:center;font-size:17px;margin-bottom:14px" maxlength="20" autofocus>
+    <button class="btn btn-primary" id="name-btn">Let's Go ⚽</button>
+  </div>
+
+  <!-- MAIN MENU -->
+  <div class="screen" id="menu">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+      <div>
+        <div id="menu-greeting" style="font-size:13px;color:var(--textSec)"></div>
+        <div style="font-size:36px;font-family:var(--fontD);letter-spacing:3px">KICK<span style="color:var(--pitch)">IQ</span></div>
+      </div>
+      <div id="settings-btn" style="width:40px;height:40px;border-radius:12px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px">⚙️</div>
+    </div>
+    <div class="card" style="margin-bottom:20px;border-left:3px solid var(--gold);background:linear-gradient(135deg,var(--card),var(--surface))">
+      <div style="font-size:10px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:2px;margin-bottom:4px">⚡ Quick Fact</div>
+      <div style="font-size:13px;color:var(--textSec);line-height:1.6">Petr Čech kept 24 clean sheets in a single PL season (2004-05) — a record that still stands today.</div>
+    </div>
+    <div style="font-size:11px;font-weight:700;color:var(--textDim);text-transform:uppercase;letter-spacing:2px;margin-bottom:10px">Choose Mode</div>
+    <div id="mode-cpu" class="card" style="margin-bottom:10px;cursor:pointer;display:flex;align-items:center;gap:14px">
+      <div style="width:48px;height:48px;border-radius:12px;flex-shrink:0;background:var(--pitchGlow);display:flex;align-items:center;justify-content:center;font-size:24px">🤖</div>
+      <div><div style="font-size:15px;font-weight:700">vs Computer</div><div style="font-size:11px;color:var(--textSec);margin-top:1px">Test your PL knowledge solo</div></div>
+      <div style="margin-left:auto;color:var(--textDim);font-size:18px">›</div>
+    </div>
+    <div id="mode-online" class="card" style="cursor:pointer;display:flex;align-items:center;gap:14px">
+      <div style="width:48px;height:48px;border-radius:12px;flex-shrink:0;background:var(--blueDim);display:flex;align-items:center;justify-content:center;font-size:24px">🌐</div>
+      <div><div style="font-size:15px;font-weight:700">Play Online</div><div style="font-size:11px;color:var(--textSec);margin-top:1px">Challenge a friend anywhere in the world</div></div>
+      <div style="margin-left:auto;color:var(--textDim);font-size:18px">›</div>
+    </div>
+  </div>
+
+  <!-- DIFFICULTY SELECT -->
+  <div class="screen" id="difficulty">
+    <div class="nav-btn"><div class="back" id="diff-back">←</div><span class="label" id="diff-back2">Back</span><div class="home" id="diff-home">⚽ Menu</div></div>
+    <div id="diff-mode-label" style="font-size:10px;color:var(--textSec);text-transform:uppercase;letter-spacing:2px;margin-bottom:4px"></div>
+    <div style="font-size:28px;font-family:var(--fontD);letter-spacing:2px;margin-bottom:20px">SELECT DIFFICULTY</div>
+    <div id="diff-cards"></div>
+    <div class="card" style="margin-top:6px">
+      <div style="font-size:11px;font-weight:600;color:var(--textSec);margin-bottom:6px">⚙️ Custom Timer: <span id="diff-timer-val" style="color:var(--pitch);font-weight:700"></span></div>
+      <input type="range" min="5" max="60" id="diff-timer-slider" style="width:100%">
+      <div style="display:flex;justify-content:space-between"><span style="font-size:9px;color:var(--textDim)">5s</span><span style="font-size:9px;color:var(--textDim)">60s</span></div>
+    </div>
+  </div>
+
+  <!-- ONLINE LOBBY -->
+  <div class="screen" id="lobby">
+    <div class="nav-btn"><div class="back" id="lobby-back">←</div><span class="label" id="lobby-back2">Back</span><div class="home" id="lobby-home">⚽ Menu</div></div>
+    <div style="font-size:28px;font-family:var(--fontD);letter-spacing:2px;margin-bottom:4px">ONLINE MATCH</div>
+    <div id="lobby-meta" style="font-size:12px;color:var(--textSec);margin-bottom:24px"></div>
+    <div id="lobby-error" style="display:none;background:var(--redDim);border:1px solid rgba(255,82,82,0.3);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--red)"></div>
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-size:14px;font-weight:700;margin-bottom:4px">Create a Game</div>
+      <div style="font-size:11px;color:var(--textSec);margin-bottom:12px">Get a room code to share with your friend</div>
+      <button class="btn btn-primary" id="create-btn">Create Room</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><div style="flex:1;height:1px;background:var(--border)"></div><span style="font-size:11px;color:var(--textDim);font-weight:600">OR</span><div style="flex:1;height:1px;background:var(--border)"></div></div>
+    <div class="card">
+      <div style="font-size:14px;font-weight:700;margin-bottom:4px">Join a Game</div>
+      <div style="font-size:11px;color:var(--textSec);margin-bottom:12px">Enter the room code your friend shared</div>
+      <input id="join-input" class="input" placeholder="ENTER CODE" maxlength="8" style="text-align:center;font-size:22px;font-family:var(--fontD);letter-spacing:6px;margin-bottom:10px">
+      <button class="btn btn-blue" id="join-btn">Join Room</button>
+    </div>
+  </div>
+
+  <!-- WAITING ROOM -->
+  <div class="screen" id="waiting" style="text-align:center;padding-top:15vh">
+    <div style="font-size:20px;font-weight:700;margin-bottom:16px">Waiting for Opponent</div>
+    <div class="card" style="display:inline-block;padding:16px 32px;margin-bottom:20px">
+      <div style="font-size:10px;color:var(--textDim);text-transform:uppercase;letter-spacing:2px;margin-bottom:6px">Room Code</div>
+      <div id="wait-code" style="font-size:40px;font-family:var(--fontD);letter-spacing:8px;color:var(--pitch)"></div>
+    </div>
+    <div id="wait-status" style="font-size:13px;color:var(--textSec);margin-bottom:8px">Connecting...</div>
+    <div id="wait-diff" style="font-size:12px;color:var(--textDim);margin-bottom:24px"></div>
+    <div class="dot-loader" style="margin-bottom:24px"><span></span><span></span><span></span></div>
+    <button class="btn btn-ghost" id="wait-cancel">Cancel</button>
+  </div>
+
+  <!-- GAMEPLAY -->
+  <div class="screen" id="playing">
+    <div id="quit-overlay" style="display:none" class="overlay">
+      <div class="modal">
+        <div style="font-size:36px;margin-bottom:8px">🚪</div>
+        <div style="font-size:18px;font-weight:700;margin-bottom:6px">Quit Game?</div>
+        <div style="font-size:12px;color:var(--textSec);margin-bottom:20px;line-height:1.5">Your progress will be lost and you'll return to the main menu.</div>
+        <button class="btn btn-red" id="quit-yes" style="margin-bottom:8px">Quit to Menu</button>
+        <button class="btn btn-ghost" id="quit-no">Keep Playing</button>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div id="quit-btn" style="width:32px;height:32px;border-radius:8px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:var(--textSec);flex-shrink:0">✕</div>
+        <div id="q-num" style="font-size:12px;color:var(--textSec)"></div>
+      </div>
+      <div id="scoreboard" style="font-size:11px;color:var(--textSec)"></div>
+      <div id="timer" class="timer-ring safe"></div>
+    </div>
+    <div class="progress"><div class="fill" id="q-progress-fill"></div></div>
+    <div id="q-badge" class="badge" style="border:1px solid;margin-bottom:12px"></div>
+    <div id="q-text" style="font-size:19px;font-weight:700;color:#fff;line-height:1.45;margin-bottom:22px"></div>
+    <div id="q-options"></div>
+    <div id="timeout-msg" style="display:none;text-align:center;padding:10px;border-radius:10px;background:var(--redDim);color:var(--red);font-size:13px;font-weight:600;margin-top:4px">⏱ Time's up!</div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="screen" id="results" style="text-align:center">
+    <div style="text-align:left;margin-bottom:8px">
+      <div id="r-home-btn" style="display:inline-flex;align-items:center;gap:6px;color:var(--textSec);font-size:13px;cursor:pointer">
+        <span style="width:28px;height:28px;border-radius:8px;background:var(--card);border:1px solid var(--border);display:inline-flex;align-items:center;justify-content:center;font-size:12px">⚽</span> Menu
+      </div>
+    </div>
+    <div id="r-emoji" style="font-size:48px;margin-bottom:4px"></div>
+    <div id="r-title" style="font-size:32px;font-family:var(--fontD);letter-spacing:3px;color:var(--gold)"></div>
+    <div id="r-subtitle" style="font-size:12px;color:var(--textSec);margin-bottom:20px"></div>
+    <div class="card" style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-around;align-items:center">
+        <div style="text-align:center"><div id="r-my-name" style="font-size:12px;font-weight:600;margin-bottom:4px"></div><div id="r-my-score" style="font-size:36px;font-weight:900"></div><div id="r-total" style="font-size:10px;color:var(--textDim)"></div></div>
+        <div style="font-size:16px;font-family:var(--fontD);color:var(--textDim);letter-spacing:3px;padding:6px 14px;border-radius:8px;background:var(--surface)">VS</div>
+        <div style="text-align:center"><div id="r-opp-name" style="font-size:12px;font-weight:600;margin-bottom:4px"></div><div id="r-opp-score" style="font-size:36px;font-weight:900"></div><div id="r-total2" style="font-size:10px;color:var(--textDim)"></div></div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">
+      <div class="card" style="padding:12px 8px;text-align:center"><div id="r-correct" style="font-size:20px;font-weight:800;color:var(--pitch)"></div><div style="font-size:9px;color:var(--textDim);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Correct</div></div>
+      <div class="card" style="padding:12px 8px;text-align:center"><div id="r-avgtime" style="font-size:20px;font-weight:800;color:var(--blue)"></div><div style="font-size:9px;color:var(--textDim);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Avg Time</div></div>
+      <div class="card" style="padding:12px 8px;text-align:center"><div id="r-accuracy" style="font-size:20px;font-weight:800;color:var(--gold)"></div><div style="font-size:9px;color:var(--textDim);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Accuracy</div></div>
+    </div>
+    <div class="card" style="padding:12px;margin-bottom:16px;text-align:left">
+      <div style="font-size:11px;font-weight:700;color:var(--textDim);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">Answer Review</div>
+      <div id="r-review"></div>
+    </div>
+    <div id="r-waiting" style="display:none;font-size:12px;color:var(--blue);margin-bottom:12px"></div>
+    <button class="btn btn-primary" id="r-again" style="margin-bottom:8px">Play Again</button>
+    <button class="btn btn-ghost" id="r-home">Home</button>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="screen" id="settings">
+    <div class="nav-btn"><div class="back" id="set-back">←</div><span class="label" id="set-back2">Main Menu</span></div>
+    <div style="font-size:28px;font-family:var(--fontD);letter-spacing:2px;margin-bottom:20px">SETTINGS</div>
+    <div style="font-size:11px;font-weight:700;color:var(--textDim);text-transform:uppercase;letter-spacing:2px;margin-bottom:10px">Timer (seconds per question)</div>
+    <div id="set-timers"></div>
+    <div style="font-size:11px;font-weight:700;color:var(--textDim);text-transform:uppercase;letter-spacing:2px;margin-top:20px;margin-bottom:10px">Profile</div>
+    <div class="card">
+      <div style="font-size:12px;color:var(--textSec);margin-bottom:6px">Display Name</div>
+      <input id="set-name" class="input" maxlength="20">
+    </div>
+  </div>
+  `;
+
+  // ─── Wire Events ──────────────────────────────
+  $("name-btn").onclick = () => { if ($("name-input").value.trim()) { state.name = $("name-input").value.trim(); $("menu-greeting").textContent = `Hey ${state.name} 👋`; show("menu"); } };
+  $("name-input").onkeydown = (e) => { if (e.key === "Enter") $("name-btn").click(); };
+
+  $("mode-cpu").onclick = () => { state.mode = "computer"; showDifficulty(); };
+  $("mode-online").onclick = () => { state.mode = "online"; showDifficulty(); };
+  $("settings-btn").onclick = () => showSettings();
+
+  $("diff-back").onclick = $("diff-back2").onclick = () => show("menu");
+  $("diff-home").onclick = goHome;
+
+  $("diff-timer-slider").oninput = (e) => {
+    state.timerSettings[state.difficulty] = parseInt(e.target.value);
+    $("diff-timer-val").textContent = e.target.value + "s";
+  };
+
+  $("lobby-back").onclick = $("lobby-back2").onclick = () => { destroyPeer(); showDifficulty(); };
+  $("lobby-home").onclick = goHome;
+  $("create-btn").onclick = () => { state.questions = pick(state.difficulty); createRoom(); };
+  $("join-btn").onclick = joinRoom;
+  $("join-input").onkeydown = (e) => { if (e.key === "Enter") joinRoom(); };
+
+  $("wait-cancel").onclick = goHome;
+
+  $("quit-btn").onclick = () => { $("quit-overlay").style.display = "flex"; };
+  $("quit-yes").onclick = goHome;
+  $("quit-no").onclick = () => { $("quit-overlay").style.display = "none"; };
+
+  $("r-home-btn").onclick = goHome;
+  $("r-home").onclick = goHome;
+  $("r-again").onclick = () => {
+    if (state.mode === "computer") startVsComputer();
+    else { $("lobby-error").style.display = "none"; showLobby(); }
+  };
+
+  $("set-back").onclick = $("set-back2").onclick = goHome;
+  $("set-name").oninput = (e) => { state.name = e.target.value; $("menu-greeting").textContent = `Hey ${state.name} 👋`; };
+}
+
+function showDifficulty() {
+  $("diff-mode-label").textContent = state.mode === "computer" ? "🤖 vs Computer · Premier League" : "🌐 Online · Premier League";
+  const container = $("diff-cards");
+  container.innerHTML = "";
+  Object.entries(DIFF).forEach(([key, meta]) => {
+    const card = document.createElement("div");
+    card.className = "card diff-card";
+    card.style.borderLeft = `4px solid ${meta.color}`;
+    card.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span style="font-size:18px">${meta.emoji}</span>
+        <span style="font-size:16px;font-weight:700">${meta.label}</span>
+        <span style="margin-left:auto;font-size:11px;color:${meta.color};font-weight:600">×${meta.xp} XP</span>
+      </div>
+      <div style="font-size:11px;color:var(--textSec)">Default: ${state.timerSettings[key]}s per question · ${NUM_Q} questions</div>
+    `;
+    card.onclick = () => {
+      state.difficulty = key;
+      if (state.mode === "computer") startVsComputer();
+      else showLobby();
+    };
+    container.appendChild(card);
+  });
+  $("diff-timer-slider").value = state.timerSettings[state.difficulty];
+  $("diff-timer-val").textContent = state.timerSettings[state.difficulty] + "s";
+  show("difficulty");
+
+  // Update slider on difficulty highlight
+  container.querySelectorAll(".diff-card").forEach((card, i) => {
+    const key = Object.keys(DIFF)[i];
+    card.addEventListener("mouseenter", () => {
+      $("diff-timer-slider").value = state.timerSettings[key];
+      $("diff-timer-val").textContent = state.timerSettings[key] + "s";
+      state.difficulty = key;
+    });
+  });
+}
+
+function showLobby() {
+  $("lobby-meta").textContent = `${DIFF[state.difficulty].emoji} ${DIFF[state.difficulty].label} · ${state.timerSettings[state.difficulty]}s timer`;
+  $("lobby-error").style.display = "none";
+  $("join-input").value = "";
+  show("lobby");
+}
+
+function showSettings() {
+  const container = $("set-timers");
+  container.innerHTML = "";
+  Object.entries(DIFF).forEach(([key, meta]) => {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.style.cssText = `margin-bottom:8px;border-left:3px solid ${meta.color}`;
+    const valSpan = document.createElement("span");
+    valSpan.style.cssText = `font-size:14px;font-weight:700;color:${meta.color}`;
+    valSpan.textContent = state.timerSettings[key] + "s";
+    card.innerHTML = `<div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="font-size:13px;font-weight:600">${meta.emoji} ${meta.label}</span></div>`;
+    card.querySelector("div").appendChild(valSpan);
+    const slider = document.createElement("input");
+    slider.type = "range"; slider.min = 5; slider.max = 60; slider.value = state.timerSettings[key];
+    slider.style.width = "100%";
+    slider.oninput = (e) => { state.timerSettings[key] = parseInt(e.target.value); valSpan.textContent = e.target.value + "s"; };
+    card.appendChild(slider);
+    container.appendChild(card);
+  });
+  $("set-name").value = state.name;
+  show("settings");
+}
+
+// ─── Init ───────────────────────────────────────
+buildApp();
+</script>
+</body>
+</html>
